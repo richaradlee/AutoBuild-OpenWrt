@@ -27,7 +27,7 @@ jobs:
         branch: [lede, immortalwrt]
 
     env:
-      CONFIG_FILE: config/${{ matrix.target }}.config
+      CONFIG_FILE: configs/${{ matrix.target }}.config
       DIY_SCRIPT: diy-${{ matrix.branch }}.sh
       RELEASE_TAG: ${{ matrix.target }}-${{ matrix.branch }}
       
@@ -139,11 +139,8 @@ jobs:
       run: |
         cd $OPENWRT_PATH
         if [ $SOURCE_REPO == 'lede' ]; then
-          sed -i '/luci/s/^#//; /openwrt-23.05/s/^/#/' feeds.conf.default
           sed -i 'https://github.com/kenzok8/small-package' feeds.conf.default
         fi
-        rm -rf feeds/packages/lang/golang
-        git clone https://github.com/kenzok8/golang feeds/packages/lang/golang  
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
