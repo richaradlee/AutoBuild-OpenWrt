@@ -27,7 +27,7 @@ jobs:
         branch: [lede, immortalwrt]
 
     env:
-      CONFIG_FILE: configs/${{ matrix.target }}.config
+      CONFIG_FILE: config/${{ matrix.target }}.config
       DIY_SCRIPT: diy-${{ matrix.branch }}.sh
       RELEASE_TAG: ${{ matrix.target }}-${{ matrix.branch }}
       
