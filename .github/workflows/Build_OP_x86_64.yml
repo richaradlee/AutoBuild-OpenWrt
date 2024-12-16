@@ -141,6 +141,7 @@ jobs:
         if [ $SOURCE_REPO == 'lede' ]; then
         sed -i '/luci/s/^#//; /openwrt-23.05/s/^/#/' feeds.conf.default
         fi
+        echo 'src-git secondfeed https://github.com/kenzok8/small-package' >> feeds.conf.default
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
