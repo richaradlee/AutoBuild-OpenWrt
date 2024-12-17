@@ -153,11 +153,12 @@ jobs:
       if: (!cancelled())
       run: df -hT
 
-    - name : Upload artifact
-      uses: actions/upload-artifact@main
-      with:
-        name: OpenWrt
-        path: openwrt/bin
+    - name: Generate release tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo -e "墙内外加速下载 🎈:\n" >> release.txt
+        echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v2
@@ -169,6 +170,12 @@ jobs:
         name: ${{ env.date2 }} ${{matrix.target}}
         tag_name: ${{ env.date }}_${{matrix.target}}
         body_path: release.txt
+
+    #- name : Upload artifact
+    #  uses: actions/upload-artifact@main
+    #  with:
+    #    name: OpenWrt
+    #    path: openwrt/bin
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
