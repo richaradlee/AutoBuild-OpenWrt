@@ -10,7 +10,7 @@ env:
   CLASH_KERNEL: amd64
   UPLOAD_FIRMWARE: true
   UPLOAD_BIN_DIR: false
-  #UPLOAD_ARTIFACT: true
+  UPLOAD_ARTIFACT: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
 
@@ -167,11 +167,11 @@ jobs:
         tag_name: ${{ env.date }}_${{matrix.target}}
         body_path: release.txt
 
-    #- name : Upload artifact
-    #  uses: actions/upload-artifact@main
-    #  with:
-    #    name: OpenWrt
-    #    path: openwrt/bin
+    - name : Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.date2 }} ${{matrix.target}}
+        path: ./bin/targets/
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
