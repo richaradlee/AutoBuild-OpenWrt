@@ -153,22 +153,34 @@ jobs:
       if: (!cancelled())
       run: df -hT
 
-    - name: Upload Firmware To Artifact
-      if: steps.compile.conclusion == 'success' && env.UPLOAD_ARTIFACT == 'true'
+    - name : Upload artifact
       uses: actions/upload-artifact@main
       with:
-        name: ${{ env.SOURCE_REPO }}-openwrt-${{ env.DEVICE_TARGET }}-${{ env.DEVICE_SUBTARGET }}-${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE_PATH }}
+        name: OpenWrt
+        path: openwrt/bin
 
-    - name: Upload Firmware To Release
-      uses: ncipollo/release-action@main
-      if: steps.compile.conclusion == 'success' && env.UPLOAD_RELEASE == 'true'
+    - name: Upload firmware to release
+      uses: softprops/action-gh-release@v2
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
       with:
-        name: OpenWRT_${{ matrix.branch }}_${{ env.DEVICE_TARGET }}-${{ env.DEVICE_SUBTARGET }}  ${{ env.DATE }}
-        allowUpdates: true
-        removeArtifacts: true
-        tag: ${{ env.BUILD_TAG }}
-        token: ${{ secrets.SEARIY_TOKEN }}
-        artifacts: ${{ env.FIRMWARE_PATH }}/*
-        body: |
-          #########-- 📒 -- 💻 -- ⚽ --[固件源码](${{ env.REPO_URL }})更新记录-- 💝 -- 🌐 -- 🔑 -- #########
+        files: "${{ env.FIRMWARE }}/*"
+        name: ${{ env.date2 }} ${{matrix.target}}
+        tag_name: ${{ env.date }}_${{matrix.target}}
+        body_path: release.txt
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        retain_days: 1
+        keep_minimum_runs: 0
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@master
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 6
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
