@@ -18,7 +18,7 @@ sed -i 's/192.168.1.1/192.168.1.251/g' openwrt/package/base-files/files/bin/conf
 ##################################
 
 # 固件版本前面添加个性名字
-sed -i 's#LEDE#OpenWrt#g' /etc/openwrt_release
+#sed -i 's#LEDE#OpenWrt#g' /etc/openwrt_release
 
 # 更改 Argon 主题背景 *必须有images目录对应里面的图片
 #cp -f $GITHUB_WORKSPACE/images/bg1.jpg feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
