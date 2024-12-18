@@ -160,6 +160,12 @@ jobs:
     #    name: ${{ env.date2 }} ${{matrix.target}}
     #   path: ${{ env.FIRMWARE }}
 
+    #- name : Upload artifact
+    #  uses: actions/upload-artifact@v4
+    # with:
+    #    name: ${{ env.date2 }} ${{matrix.target}}
+    #    path: ./bin/targets/
+
     - name: Generate release tag
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
@@ -177,12 +183,6 @@ jobs:
         name: ${{ env.date2 }} ${{matrix.target}}
         tag_name: ${{ env.date }}_${{matrix.target}}
         body_path: release.txt
-
-    #- name : Upload artifact
-    #  uses: actions/upload-artifact@v4
-    # with:
-    #    name: ${{ env.date2 }} ${{matrix.target}}
-    #    path: ./bin/targets/
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
