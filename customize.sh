@@ -35,7 +35,7 @@ sed -i 's/192.168.1.1/192.168.1.251/g' openwrt/package/base-files/files/bin/conf
 
 # 设置 root 用户密码
 #sed -i 's/root:.*/root:$1$tTPCBw1t$ldzfp37h5lSpO9VXk4uUE\/:18336:0:99999:7:::/g' package/base-files/files/etc/shadow  #默认密码password
-sed -i "/CYXluq4wUazHjmCDBCqXF/d" package/lean/default-settings/files/zzz-default-settings  #默认密码为空
+#sed -i "/CYXluq4wUazHjmCDBCqXF/d" package/lean/default-settings/files/zzz-default-settings  #默认密码为空
 
 # 添加额外插件
 # git_clone https://github.com/kongfl888/luci-app-adguardhome
