@@ -159,6 +159,13 @@ jobs:
     #  with:
     #    name: ${{ env.date2 }} ${{matrix.target}}
     #   path: ${{ env.FIRMWARE }}
+
+    - name: Generate release tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo -e "🎈:\n" >> release.txt
+        echo "status=success" >> $GITHUB_OUTPUT
  
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v1
@@ -169,7 +176,7 @@ jobs:
         files: "${{ env.FIRMWARE }}/*"
         name: ${{ env.date2 }} ${{matrix.target}}
         tag_name: ${{ env.date }}_${{matrix.target}}
-        #body_path: release.txt
+        body_path: release.txt
 
     #- name : Upload artifact
     #  uses: actions/upload-artifact@v4
