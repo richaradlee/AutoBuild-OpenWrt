@@ -170,7 +170,7 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo -e "🎈:\n" >> release.txt
+        echo -e " #########-- 📒 -- 💻 -- ⚽ --[固件源码](${{ env.REPO_URL }})更新记录-- 💝 -- 🌐 -- 🔑 -- ######### " >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
  
     - name: Upload firmware to release
@@ -190,11 +190,11 @@ jobs:
         retain_days: 1
         keep_minimum_runs: 0
 
-    #- name: Remove old Releases
-    #  uses: dev-drprasad/delete-older-releases@master
-    #  if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-    #  with:
-    #    keep_latest: 6
-    #    delete_tags: true
-    #  env:
-    #    GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@master
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 6
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
