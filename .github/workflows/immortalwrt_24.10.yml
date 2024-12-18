@@ -10,6 +10,7 @@ on:
 env:
   CLASH_KERNEL: amd64
   CACHE_TOOLCHAIN: true
+  UPLOAD_FIRMWARE: true
   UPLOAD_BIN_DIR: false
   UPLOAD_ARTIFACT: true
   UPLOAD_RELEASE: true
@@ -92,7 +93,7 @@ jobs:
         sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
         patch -p1 < "feeds/smpackage/.github/diy/patches/0004-luci-mod-status-firewall-disable-legacy-firewall-rul.patch"
         cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner
-        sed -i "s/%D %V, %C/openwrt $(date +'%m.%d') by kenzo/g" package/base-files/files/etc/banner
+        sed -i "s/%D %V, %C/openwrt $(date +'%m.%d') by Richard/g" package/base-files/files/etc/banner
         #cp -Rf feeds/smpackage/.github/diy/.packages/files/* files
         ./scripts/feeds update -a && ./scripts/feeds install -a
         cp -f feeds/smpackage/.github/diy/${{matrix.target}}.config .config && make defconfig
@@ -158,7 +159,7 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo -e "墙内外加速下载 🎈:\n" >> release.txt
+        echo -e " 🎈:\n" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
    
     - name: Upload firmware to release
@@ -171,12 +172,6 @@ jobs:
         name: ${{ env.date2 }} ${{matrix.target}}
         tag_name: ${{ env.date }}_${{matrix.target}}
         body_path: release.txt
-
-    #- name : Upload artifact
-    #  uses: actions/upload-artifact@main
-    #  with:
-    #    name: OpenWrt
-    #    path: openwrt/bin
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
