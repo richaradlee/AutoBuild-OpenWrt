@@ -153,12 +153,12 @@ jobs:
         rm -rf sha256sums
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         
-    - name: Upload Firmware To Artifact
-      if: steps.compile.conclusion == 'success' && env.UPLOAD_ARTIFACT == 'true'
-      uses: actions/upload-artifact@main
-      with:
-        name: ${{ env.date2 }} ${{matrix.target}}
-        path: ${{ env.FIRMWARE }}
+    #- name: Upload Firmware To Artifact
+    #  if: steps.compile.conclusion == 'success' && env.UPLOAD_ARTIFACT == 'true'
+    #  uses: actions/upload-artifact@main
+    #  with:
+    #    name: ${{ env.date2 }} ${{matrix.target}}
+    #   path: ${{ env.FIRMWARE }}
  
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v1
@@ -171,11 +171,11 @@ jobs:
         tag_name: ${{ env.date }}_${{matrix.target}}
         #body_path: release.txt
 
-    - name : Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.date2 }} ${{matrix.target}}
-        path: ./bin/targets/
+    #- name : Upload artifact
+    #  uses: actions/upload-artifact@v4
+    # with:
+    #    name: ${{ env.date2 }} ${{matrix.target}}
+    #    path: ./bin/targets/
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
