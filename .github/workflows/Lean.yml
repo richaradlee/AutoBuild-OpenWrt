@@ -176,7 +176,7 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo -e " #########-- 📒 -- 💻 -- ⚽ --[固件源码](${{ env.REPO_URL }})更新记录-- 💝 -- 🌐 -- 🔑 -- ######### " >> release.txt
+        echo -e " -- 📒 -- 💻 -- ⚽ -- 💝 -- 🌐 -- 🔑 -- " >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
  
     - name: Upload firmware to release
