@@ -174,8 +174,8 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
  
     - name: Upload firmware to release
-      uses: softprops/action-gh-release@v1
-      if: steps.tag.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'
+      uses: softprops/action-gh-release@v1  #v2 v1代表不生成tg
+      if: steps.tag.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'   #!cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
       with:
