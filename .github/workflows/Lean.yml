@@ -27,6 +27,16 @@ jobs:
     - name: Checkout source code
       uses: actions/checkout@v3
 
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./openwrt/dl
+          ./openwrt/build_dir
+        key: ${{ runner.os }}-openwrt-${{ matrix.target }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-
+
     - name: Build and Cache Docker Image
       id: build_docker_image
       run: |
