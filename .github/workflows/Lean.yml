@@ -59,7 +59,7 @@ jobs:
             uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename \
             && apt-get clean
         WORKDIR /workspace
-EOF
+        EOF
         else
           echo "Base image found. Skipping build step."
         fi
