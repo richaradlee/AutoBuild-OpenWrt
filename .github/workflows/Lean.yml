@@ -40,11 +40,9 @@ jobs:
     - name: Build and Cache Docker Image
       id: build_docker_image
       run: |
-        # Define image name and tag
         IMAGE_NAME=openwrt-build-env
         IMAGE_TAG=latest
 
-        # Check if the image exists locally
         if ! docker images | grep -q "${IMAGE_NAME}"; then
           echo "Base image not found. Building it now..."
           docker build -t ${IMAGE_NAME}:${IMAGE_TAG} - <<EOF
