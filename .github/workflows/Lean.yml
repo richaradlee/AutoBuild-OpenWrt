@@ -58,8 +58,8 @@ RUN apt-get update && apt-get install -y \
     libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz mkisofs genisoimage \
     msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
     python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
-    uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename && \
-    apt-get clean
+    uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename \
+    && apt-get clean
 WORKDIR /workspace
 EOF
         else
@@ -67,13 +67,6 @@ EOF
         fi
 
         echo "DOCKER_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_ENV
-
-        else
-          echo "Base image found. Skipping build step."
-        fi
-
-        echo "DOCKER_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_ENV
-
 
     - name: Clone source code
       run: |
