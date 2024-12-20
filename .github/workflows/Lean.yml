@@ -51,7 +51,9 @@ jobs:
           docker build -t ${IMAGE_NAME}:${IMAGE_TAG} - <<EOF
         FROM ubuntu:22.04
         ENV TZ=Asia/Shanghai
-        RUN apt-get update && apt-get install -y \
+        RUN apt-get update && apt-get install -y tzdata && \
+        ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+        dpkg-reconfigure --frontend noninteractive tzdata 
             ack antlr3 asciidoc autoconf automake autopoint binutils bison \
             build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
             fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged \
