@@ -2,7 +2,7 @@ name: Lean
 on:
   workflow_dispatch:
   schedule:
-    - cron: '00 17 * * *'
+    - cron: 00 17 * * *
   watch:
     types: started
 
@@ -15,77 +15,48 @@ env:
   TZ: Asia/Shanghai
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
-    name: Build OpenWrt ${{ matrix.target }}
+  merge:
+    runs-on: Ubuntu-22.04
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    name: Build ${{matrix.target}}
     strategy:
       fail-fast: false
       matrix:
-        target: [Lean]
-
+         target: [Lean]
+    
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@main
 
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ./openwrt/dl
-          ./openwrt/build_dir
-        key: ${{ runner.os }}-openwrt-${{ matrix.target }}
-        restore-keys: |
-          ${{ runner.os }}-openwrt-
-
-   # Add clean previous build step here
-    - name: Clean previous build
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
       run: |
-        if [ ! -d "openwrt" ]; then
-          echo "openwrt directory not found. Exiting."
-          exit 1
-        fi
-        cd openwrt
-        make clean
-        rm -rf staging_dir build_dir
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Build and Cache Docker Image
-      id: build_docker_image
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+        bzip2 ccache clang cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
+        git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev \
+        libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev  libpython3-dev libreadline-dev \
+        libssl-dev libtool llvm lrzsz mkisofs genisoimage msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 \
+        python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
+        uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        
+    - name: Get current date
+      id: date
       run: |
-       IMAGE_NAME=openwrt-build-env
-       IMAGE_TAG=latest
-       if ! docker images | grep -q "${IMAGE_NAME}"; then
-         echo "Base image not found. Building it now..."
-         docker build -t ${IMAGE_NAME}:${IMAGE_TAG} - <<EOF
-       FROM ubuntu:22.04
-       ENV TZ=Asia/Shanghai
-       ENV DEBIAN_FRONTEND=noninteractive
-       RUN apt-get update && apt-get install -y \
-           apt-transport-https ca-certificates curl software-properties-common && \
-           rm -rf /etc/apparmor.d && \
-           apt-get clean
-       RUN apt-get update && \
-           apt-get install -y \    
-           ack antlr3 asciidoc autoconf automake autopoint bc binutils bison \
-           build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
-           fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged \
-           help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
-           libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev \
-           libpython3-dev libreadline-dev libssl-dev libtool libz-dev llvm lrzsz mkisofs genisoimage \
-           msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
-           python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
-           uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename && \
-           apt-get clean
-       
-       WORKDIR /workspace
-       EOF
-          else
-            echo "Base image found. Skipping build step."
-          fi
-          echo "DOCKER_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_ENV
-
+        echo "date=$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_ENV
+        echo "date2=$(date +'%m/%d %Y')" >> $GITHUB_ENV
+        echo "date3=$(date +'%m.%d')" >> $GITHUB_ENV
+        echo "DOCKERTAG=${{ secrets.DOCKER_ID }}/openwrt-6p:latest" >> $GITHUB_ENV
+        VERSION="$(echo "${{github.event.action}}" | grep -Eo " [0-9.]+" | sed -e 's/ //')" || true
+        [ "$VERSION" ] && echo "VERSION=$VERSION" >> $GITHUB_ENV || echo "VERSION=$(date +'%m.%d')" >> $GITHUB_ENV
+        
     - name: Clone source code
       env: 
         REPO_URL: https://github.com/coolsnowwolf/lede
@@ -93,7 +64,7 @@ jobs:
       run: |
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
-        sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
+        sed -i '$a src-git smpackage https://github.com/richaradlee/small-package' feeds.conf.default
 
     - name: Free up disk space
       env:
@@ -131,33 +102,35 @@ jobs:
         ./scripts/feeds install -a
         cp -f feeds/smpackage/.github/diy/${{matrix.target}}.config .config && make defconfig
         sed -i 's/CONFIG_BINUTILS_VERSION="2.42"/CONFIG_BINUTILS_VERSION="2.43.1"/' .config
-
-    - name: Check Prerequisites
+        
+    - name: Download package
+      working-directory: ./openwrt
       run: |
-        cd openwrt
-        make FORCE=1 -j1 V=s prereq || (echo "Prerequisites check failed. Please check the logs above for details." && exit 1)
-    
-    - name: Cache build
-      uses: actions/cache@v3
+        make download -j$(($(nproc)+1))
+        find dl -size -1024c -exec rm -f {} \;
+        
+    - name: Cache
+      uses: stupidloud/cachewrtbuild@main
       with:
-        path: |
-          ${{ github.workspace }}/openwrt
-        key: ${{ runner.os }}-openwrt-cache-${{ matrix.target }}
-        restore-keys: |
-          ${{ runner.os }}-openwrt-cache-
+        ccache: 'true'
+        mixkey: ${{ matrix.target }}
+        clean: ${{ contains(github.event.action, 'nocache') }}
+        prefix: ${{ github.workspace }}/openwrt
+    
+    - name: Check space usage
+      run: |
+        shopt -s extglob
+        cd openwrt
+        if [[ -f staging_dir/*${{ env.MTARGET }}*/bin ]]; then
+            rm -rf staging_dir/!(*${{ env.MTARGET }}*|host|hostpkg) build_dir/!(*${{ env.MTARGET }}*|host|hostpkg)
+        fi
+        df -hT
 
     - name: Compile the firmware
+      working-directory: ./openwrt
       run: |
-        docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "\
-        cd openwrt && \
-        make FORCE=1 -j$(($(nproc)+1)) || make -j1 V=s" | tee build.log
-
-    - name: Upload bin directory
-      uses: actions/upload-artifact@v3
-      if: steps.compile.conclusion == 'success' && env.UPLOAD_BIN_DIR == 'true'
-      with:
-        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: openwrt/bin
+        echo -e "$(($(nproc)+1)) thread compile"
+        make -j$(($(nproc)+1)) || make -j1 V=s
 
     - name: Organize files
       id: organize
@@ -165,24 +138,42 @@ jobs:
       run: |
         mkdir firmware
         mv -f openwrt/bin/targets/*/*/{*combined*,*sysupgrade*} ./firmware/ 2>/dev/null || true
-        cp openwrt/.config  ./firmware/${{matrix.target}}.config
-        cp openwrt/build_dir/target-*/linux-*/linux-*/.config ./firmware/${{matrix.target}}_kernel.config
         cd firmware
         echo "v${{ env.date2 }}" > version.txt
         md5=$((md5sum *squashfs-sysupgrade* || md5sum *squashfs-combined-efi*) | awk '{print $1}') 2>/dev/null
         echo $md5 >> version.txt
-        echo ${{matrix.target}} >> version.txt
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        rename -v "s/^openwrt/${{ env.VERSION }}-openwrt/" * || true
+        rename -v "s/friendlyarm_//" *gz || true
+
+    - name: Delete config and source files
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        rm -rf openwrt/.config   # 删除 config 文件
+        rm -rf openwrt          # 删除源代码文件
+
+    - name: Generate release tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo -e " -- 📒 -- 💻 -- ⚽ -- 💝 -- 🌐 -- 🔑 -- " >> release.txt
+        echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v2
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
       with:
-        files: "${{ env.FIRMWARE }}/*"
+        files: "./firmware/*"
         name: ${{ env.date2 }} ${{matrix.target}}
         tag_name: ${{ env.date }}_${{matrix.target}}
+        body_path: release.txt
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        retain_days: 1
+        keep_minimum_runs: 0
 
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@master
@@ -191,13 +182,4 @@ jobs:
         keep_latest: 6
         delete_tags: true
       env:
-        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
-
-    - name: Remove Source Code from Release
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      run: |
-        gh release view "${{ env.date }}_${{ matrix.target }}" --json assets -q '.assets[].name' | grep -E 'Source code' | while read -r asset; do
-          gh release delete-asset "${{ env.date }}_${{ matrix.target }}" "$asset"
-        done
-      env:
-        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }} 
