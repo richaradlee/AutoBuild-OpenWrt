@@ -86,7 +86,14 @@ jobs:
         ./scripts/feeds update -a 
         sed -i 's#GO_PKG_TARGET_VARS.*# #g' feeds/packages/utils/v2dat/Makefile 
         ./scripts/feeds install -a
-        cp -f feeds/smpackage/.github/diy/${{matrix.target}}.config .config && make defconfig
+       
+        CONFIG_FILE_PATH="${{ github.workspace }}/feeds/smpackage/.github/diy/${{ matrix.target }}.config"
+        if [ ! -f "$CONFIG_FILE_PATH" ]; then
+          echo "Error: Configuration file $CONFIG_FILE_PATH not found."
+          exit 1
+        fi
+
+        cp -f "$CONFIG_FILE_PATH" .config && make defconfig
         sed -i 's/CONFIG_BINUTILS_VERSION="2.42"/CONFIG_BINUTILS_VERSION="2.43.1"/' .config
         sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
         sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
