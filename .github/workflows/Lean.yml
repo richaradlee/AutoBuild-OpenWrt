@@ -77,34 +77,53 @@ jobs:
 
         echo "DOCKER_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_ENV
 
-    - name: Clone and prepare source code
+    - name: Clone source code
+      env: 
+        REPO_URL: https://github.com/coolsnowwolf/lede
+        REPO_BRANCH: master
       run: |
-        git clone --depth 1 https://github.com/coolsnowwolf/lede -b master openwrt
+        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
-        rm -rf feeds/packages/lang/golang
-        git clone https://github.com/kenzok8/golang feeds/packages/lang/golang  
-        ./scripts/feeds update -a 
-        sed -i 's#GO_PKG_TARGET_VARS.*# #g' feeds/packages/utils/v2dat/Makefile 
-        ./scripts/feeds install -a
-       
-        CONFIG_FILE_PATH="${{ github.workspace }}/feeds/smpackage/.github/diy/${{ matrix.target }}.config"
-        if [ ! -f "$CONFIG_FILE_PATH" ]; then
-          echo "Error: Configuration file $CONFIG_FILE_PATH not found."
-          exit 1
-        fi
-
-        cp -f "$CONFIG_FILE_PATH" .config && make defconfig
-        sed -i 's/CONFIG_BINUTILS_VERSION="2.42"/CONFIG_BINUTILS_VERSION="2.43.1"/' .config
         sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
+
+    - name: Free up disk space
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo mkdir -p -m 777 /mnt/openwrt/dl /mnt/openwrt/bin /mnt/openwrt/staging_dir
+        ln -sf /mnt/openwrt/dl openwrt/dl
+        ln -sf /mnt/openwrt/bin openwrt/bin
+        ln -sf /mnt/openwrt/staging_dir openwrt/staging_dir
+
+    - name: Update feeds
+      working-directory: ./openwrt
+      run: |
         sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
         sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
         git clone https://github.com/kingyond/luci-app-accesscontrol-plus.git package/accesscontrol-plus
-        ./scripts/feeds update -a && ./scripts/feeds install -a
+        ./scripts/feeds update -a
+         
+    
+    - name: Defconfig ${{matrix.target}}
+      env:
+        CONFIG_FILE: '${{matrix.target}}.config'
+      run: |
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x ./customize.sh && ./customize.sh
+        cd openwrt
+        rm -rf feeds/packages/lang/golang
+        git clone https://github.com/kenzok8/golang feeds/packages/lang/golang        
         cp -f feeds/smpackage/.github/diy/default-settings package/lean/default-settings/files/zzz-default-settings
         cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner
+        #cp -f feeds/smpackage/.github/diy/index_x86.htm package/lean/autocore/files/x86/index.htm
         sed -i "s/%D %V, %C/openwrt $(date +'%m.%d') by Richard/g" package/base-files/files/etc/banner
         sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+        ./scripts/feeds update -a 
+        sed -i 's#GO_PKG_TARGET_VARS.*# #g' feeds/packages/utils/v2dat/Makefile 
+        ./scripts/feeds install -a
+        cp -f feeds/smpackage/.github/diy/${{matrix.target}}.config .config && make defconfig
+        sed -i 's/CONFIG_BINUTILS_VERSION="2.42"/CONFIG_BINUTILS_VERSION="2.43.1"/' .config
 
     - name: Cache build
       uses: actions/cache@v3
