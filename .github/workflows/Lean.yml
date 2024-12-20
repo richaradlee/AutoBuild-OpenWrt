@@ -50,9 +50,10 @@ jobs:
          docker build -t ${IMAGE_NAME}:${IMAGE_TAG} - <<EOF
        FROM ubuntu:22.04
        ENV TZ=Asia/Shanghai
-       RUN apt-get update && apt-get install -y tzdata && \
-           ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
-           dpkg-reconfigure --frontend noninteractive tzdata 
+       ENV DEBIAN_FRONTEND=noninteractive
+       RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl software-properties-common && \
+           systemctl stop apparmor && \
+           systemctl disable apparmor
        RUN apt-get update && apt-get install -y \
            ack antlr3 asciidoc autoconf automake autopoint binutils bison \
            build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
