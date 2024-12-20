@@ -55,6 +55,7 @@ jobs:
         RUN apt-get update && apt-get install -y tzdata && \
         ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
         dpkg-reconfigure --frontend noninteractive tzdata 
+
         RUN apt-get update && apt-get install -y \
             ack antlr3 asciidoc autoconf automake autopoint binutils bison \
             build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
@@ -66,8 +67,10 @@ jobs:
             python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
             uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename \
             && apt-get clean
+        
         RUN ln -s /bin/true /etc/init.d/apparmor && \
         apt-get remove --purge -y apparmor
+        
         WORKDIR /workspace
         EOF
         else
