@@ -51,10 +51,9 @@ jobs:
        FROM ubuntu:22.04
        ENV TZ=Asia/Shanghai
        ENV DEBIAN_FRONTEND=noninteractive
-       RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl software-properties-common && \
-           systemctl stop apparmor && \
-           systemctl disable apparmor
        RUN apt-get update && apt-get install -y \
+           apt-transport-https ca-certificates curl software-properties-common && \
+           rm -rf /etc/apparmor.d && \
            ack antlr3 asciidoc autoconf automake autopoint binutils bison \
            build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
            fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged \
@@ -63,8 +62,8 @@ jobs:
            libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz mkisofs genisoimage \
            msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
            python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
-           uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename \
-           && apt-get clean
+           uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename && \
+           apt-get clean
        
        WORKDIR /workspace
        EOF
