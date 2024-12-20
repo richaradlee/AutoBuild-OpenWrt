@@ -48,26 +48,23 @@ jobs:
        if ! docker images | grep -q "${IMAGE_NAME}"; then
        echo "Base image not found. Building it now..."
        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} - <<EOF
-        
-        FROM ubuntu:22.04
-        ENV TZ=Asia/Shanghai
-        ENV DEBIAN_FRONTEND=noninteractive
-        RUN apt-get update && apt-get install -y tzdata && \
-        ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
-        dpkg-reconfigure --frontend noninteractive tzdata 
-
-        RUN apt-get update && apt-get install -y \
-            ack antlr3 asciidoc autoconf automake autopoint binutils bison \
-            build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
-            fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged \
-            help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
-            libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev \
-            libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz mkisofs genisoimage \
-            msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
-            python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
-            uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename \
-            && apt-get clean
-        
+       FROM ubuntu:22.04
+       ENV TZ=Asia/Shanghai
+       ENV DEBIAN_FRONTEND=noninteractive
+       RUN apt-get update && apt-get install -y tzdata && \
+       ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+       dpkg-reconfigure --frontend noninteractive tzdata 
+       RUN apt-get update && apt-get install -y \
+           ack antlr3 asciidoc autoconf automake autopoint binutils bison \
+           build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
+           fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged \
+           help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
+           libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev \
+           libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz mkisofs genisoimage \
+           msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
+           python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
+           uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename \
+           && apt-get clean
         WORKDIR /workspace
         EOF
           else
@@ -137,8 +134,7 @@ jobs:
 
     - name: Compile the firmware
       run: |
-        docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "cd openwrt && make download -j$(($(nproc)+1)) && make -j$(($(nproc)+1)) FORCE=1 || make -j1 V=s FORCE=1"
-    
+       docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "cd openwrt && make download -j$(($(nproc)+1)) && make -j$(($(nproc)+1)) FORCE=1 || make -j1 V=s FORCE=1"
     
     - name: Upload bin directory
       uses: actions/upload-artifact@v3
