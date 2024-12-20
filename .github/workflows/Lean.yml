@@ -73,7 +73,7 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/coolsnowwolf/lede -b master openwrt
         cd openwrt
-        sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
+        sed -i '$a src-git smpackage https://github.com/richaradlee/small-package' feeds.conf.default
 
     - name: Initialize environment using Docker
       run: |
