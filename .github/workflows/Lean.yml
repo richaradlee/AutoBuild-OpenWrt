@@ -125,9 +125,9 @@ jobs:
 
     - name: Check Prerequisites
       run: |
-        cd openwrt
-        make -j1 V=s prereq
-
+       cd openwrt
+       make -j1 V=s prereq || (echo "Prerequisites check failed. Please check the logs above for details." && exit 1)
+    
     - name: Cache build
       uses: actions/cache@v3
       with:
@@ -140,7 +140,8 @@ jobs:
     - name: Compile the firmware
       run: |
         docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "cd openwrt && make download -j$(($(nproc)+1)) && make -j$(($(nproc)+1)) FORCE=1 || make -j1 V=s FORCE=1"
-
+    
+    
     - name: Upload bin directory
       uses: actions/upload-artifact@v3
       if: steps.compile.conclusion == 'success' && env.UPLOAD_BIN_DIR == 'true'
