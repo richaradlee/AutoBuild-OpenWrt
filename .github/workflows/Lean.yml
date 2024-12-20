@@ -139,10 +139,7 @@ jobs:
 
     - name: Compile the firmware
       run: |
-        docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "\
-        cd openwrt && \
-        make download -j$(($(nproc)+1)) && \
-        make -j$(($(nproc)+1)) FORCE=1 || make -j1 V=s FORCE=1
+        docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "cd openwrt && make download -j$(($(nproc)+1)) && make -j$(($(nproc)+1)) FORCE=1 || make -j1 V=s FORCE=1"
 
     - name: Upload bin directory
       uses: actions/upload-artifact@v3
