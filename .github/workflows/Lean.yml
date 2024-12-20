@@ -124,7 +124,7 @@ jobs:
     - name: Check Prerequisites
       run: |
         cd openwrt
-        make -j1 V=s prereq || (echo "Prerequisites check failed. Please check the logs above for details." && exit 1)
+        make FORCE=1 -j1 V=s prereq || (echo "Prerequisites check failed. Please check the logs above for details." && exit 1)
     
     - name: Cache build
       uses: actions/cache@v3
