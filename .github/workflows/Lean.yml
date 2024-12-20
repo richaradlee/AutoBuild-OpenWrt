@@ -43,12 +43,11 @@ jobs:
     - name: Build and Cache Docker Image
       id: build_docker_image
       run: |
-        IMAGE_NAME=openwrt-build-env
-        IMAGE_TAG=latest
-
-        if ! docker images | grep -q "${IMAGE_NAME}"; then
-          echo "Base image not found. Building it now..."
-          docker build -t ${IMAGE_NAME}:${IMAGE_TAG} - <<EOF
+       IMAGE_NAME=openwrt-build-env
+       IMAGE_TAG=latest
+       if ! docker images | grep -q "${IMAGE_NAME}"; then
+       echo "Base image not found. Building it now..."
+       docker build -t ${IMAGE_NAME}:${IMAGE_TAG} - <<EOF
         
         FROM ubuntu:22.04
         ENV TZ=Asia/Shanghai
@@ -71,11 +70,10 @@ jobs:
         
         WORKDIR /workspace
         EOF
-        else
-          echo "Base image found. Skipping build step."
-        fi
-
-        echo "DOCKER_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_ENV
+          else
+            echo "Base image found. Skipping build step."
+          fi
+          echo "DOCKER_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_ENV
 
     - name: Clone source code
       env: 
@@ -125,8 +123,8 @@ jobs:
 
     - name: Check Prerequisites
       run: |
-       cd openwrt
-       make -j1 V=s prereq || (echo "Prerequisites check failed. Please check the logs above for details." && exit 1)
+        cd openwrt
+        make -j1 V=s prereq || (echo "Prerequisites check failed. Please check the logs above for details." && exit 1)
     
     - name: Cache build
       uses: actions/cache@v3
