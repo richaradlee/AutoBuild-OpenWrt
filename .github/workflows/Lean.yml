@@ -54,6 +54,9 @@ jobs:
        RUN apt-get update && apt-get install -y \
            apt-transport-https ca-certificates curl software-properties-common && \
            rm -rf /etc/apparmor.d && \
+           apt-get clean
+       RUN apt-get update && \
+           apt-get install -y \    
            ack antlr3 asciidoc autoconf automake autopoint binutils bison \
            build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
            fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged \
