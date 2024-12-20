@@ -68,7 +68,7 @@ jobs:
             uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename \
             && apt-get clean
         
-        RUN ln -s /bin/true /etc/init.d/apparmor && \
+        RUN systemctl disable apparmor && \
         apt-get remove --purge -y apparmor
         
         WORKDIR /workspace
