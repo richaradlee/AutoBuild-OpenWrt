@@ -103,8 +103,7 @@ jobs:
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
         git clone https://github.com/kingyond/luci-app-accesscontrol-plus.git package/accesscontrol-plus
         ./scripts/feeds update -a
-         
-    
+
     - name: Defconfig ${{matrix.target}}
       env:
         CONFIG_FILE: '${{matrix.target}}.config'
@@ -116,7 +115,6 @@ jobs:
         git clone https://github.com/kenzok8/golang feeds/packages/lang/golang        
         cp -f feeds/smpackage/.github/diy/default-settings package/lean/default-settings/files/zzz-default-settings
         cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner
-        #cp -f feeds/smpackage/.github/diy/index_x86.htm package/lean/autocore/files/x86/index.htm
         sed -i "s/%D %V, %C/openwrt $(date +'%m.%d') by Richard/g" package/base-files/files/etc/banner
         sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
         ./scripts/feeds update -a 
@@ -124,6 +122,11 @@ jobs:
         ./scripts/feeds install -a
         cp -f feeds/smpackage/.github/diy/${{matrix.target}}.config .config && make defconfig
         sed -i 's/CONFIG_BINUTILS_VERSION="2.42"/CONFIG_BINUTILS_VERSION="2.43.1"/' .config
+
+    - name: Check Prerequisites
+      run: |
+        cd openwrt
+        make -j1 V=s prereq
 
     - name: Cache build
       uses: actions/cache@v3
@@ -136,13 +139,11 @@ jobs:
 
     - name: Compile the firmware
       run: |
-        docker run -v ${{ github.workspace }}:/workspace -w /workspace --env TZ=${{ env.TZ }} ${{ env.DOCKER_IMAGE }} bash -c "\
+        docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "\
         cd openwrt && \
-        make clean && \
-        make defconfig && \
         make download -j$(($(nproc)+1)) && \
-        make -j$(($(nproc)+1)) V=s || make -j1 V=s"
-   
+        make -j$(($(nproc)+1)) || make -j1 V=s"
+
     - name: Upload bin directory
       uses: actions/upload-artifact@v3
       if: steps.compile.conclusion == 'success' && env.UPLOAD_BIN_DIR == 'true'
