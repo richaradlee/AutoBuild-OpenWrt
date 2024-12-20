@@ -1,24 +1,3 @@
-Skip to content
-Navigation Menu
-Shawleevip
-AutoBuild-OpenWrt
-
-Type / to search
-Code
-Issues
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-Settings
-Lean
-Lean #27
-Jobs
-Run details
-Workflow file for this run
-.github/workflows/Lean.yml at a564063
 name: Lean
 on:
   workflow_dispatch:
