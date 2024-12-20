@@ -77,25 +77,27 @@ jobs:
 
         echo "DOCKER_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_ENV
 
-    - name: Clone source code
+    - name: Clone and prepare source code
       run: |
         git clone --depth 1 https://github.com/coolsnowwolf/lede -b master openwrt
         cd openwrt
-        sed -i '$a src-git smpackage https://github.com/richaradlee/small-package' feeds.conf.default
-
-    - name: Initialize environment using Docker
-      run: |
-        docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "\
-        cd openwrt && \
-        sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default && \
-        sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default && \
-        git clone https://github.com/gdy666/luci-app-lucky.git package/lucky && \
-        git clone https://github.com/kingyond/luci-app-accesscontrol-plus.git package/accesscontrol-plus && \
-        ./scripts/feeds update -a && ./scripts/feeds install -a && \
-        cp -f feeds/smpackage/.github/diy/default-settings package/lean/default-settings/files/zzz-default-settings && \
-        cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner && \
-        sed -i 's/%D %V, %C/openwrt $(date +'%m.%d') by Richard/g' package/base-files/files/etc/banner && \
-        sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile"
+        rm -rf feeds/packages/lang/golang
+        git clone https://github.com/kenzok8/golang feeds/packages/lang/golang  
+        ./scripts/feeds update -a 
+        sed -i 's#GO_PKG_TARGET_VARS.*# #g' feeds/packages/utils/v2dat/Makefile 
+        ./scripts/feeds install -a
+        cp -f feeds/smpackage/.github/diy/${{matrix.target}}.config .config && make defconfig
+        sed -i 's/CONFIG_BINUTILS_VERSION="2.42"/CONFIG_BINUTILS_VERSION="2.43.1"/' .config
+        sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
+        sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
+        sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default
+        git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
+        git clone https://github.com/kingyond/luci-app-accesscontrol-plus.git package/accesscontrol-plus
+        ./scripts/feeds update -a && ./scripts/feeds install -a
+        cp -f feeds/smpackage/.github/diy/default-settings package/lean/default-settings/files/zzz-default-settings
+        cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner
+        sed -i "s/%D %V, %C/openwrt $(date +'%m.%d') by Richard/g" package/base-files/files/etc/banner
+        sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
 
     - name: Cache build
       uses: actions/cache@v3
