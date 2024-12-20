@@ -1,0 +1,156 @@
+name: Lean
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '00 17 * * *'
+  watch:
+    types: started
+
+env:
+  CLASH_KERNEL: amd64
+  UPLOAD_FIRMWARE: true
+  UPLOAD_BIN_DIR: false
+  UPLOAD_ARTIFACT: true
+  UPLOAD_RELEASE: true
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build OpenWrt ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [Lean]
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./openwrt/dl
+          ./openwrt/build_dir
+        key: ${{ runner.os }}-openwrt-${{ matrix.target }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build and Cache Docker Image
+      id: build_docker_image
+      run: |
+        IMAGE_NAME=openwrt-build-env
+        IMAGE_TAG=latest
+
+        if ! docker images | grep -q "${IMAGE_NAME}"; then
+          echo "Base image not found. Building it now..."
+          docker build -t ${IMAGE_NAME}:${IMAGE_TAG} - <<EOF
+        FROM ubuntu:22.04
+        RUN apt-get update && apt-get install -y \
+            ack antlr3 asciidoc autoconf automake autopoint binutils bison \
+            build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
+            fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged \
+            help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
+            libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev \
+            libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz mkisofs genisoimage \
+            msmtp ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
+            python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
+            uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev rename \
+            && apt-get clean
+        WORKDIR /workspace
+        EOF
+        else
+          echo "Base image found. Skipping build step."
+        fi
+
+        echo "DOCKER_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_ENV
+
+    - name: Clone source code
+      run: |
+        git clone --depth 1 https://github.com/coolsnowwolf/lede -b master openwrt
+        cd openwrt
+        sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
+
+    - name: Initialize environment using Docker
+      run: |
+        docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "\
+        cd openwrt && \
+        sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default && \
+        sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default && \
+        git clone https://github.com/gdy666/luci-app-lucky.git package/lucky && \
+        git clone https://github.com/kingyond/luci-app-accesscontrol-plus.git package/accesscontrol-plus && \
+        ./scripts/feeds update -a && ./scripts/feeds install -a && \
+        cp -f feeds/smpackage/.github/diy/default-settings package/lean/default-settings/files/zzz-default-settings && \
+        cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner && \
+        sed -i 's/%D %V, %C/openwrt $(date +'%m.%d') by Richard/g' package/base-files/files/etc/banner && \
+        sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile"
+
+    - name: Cache build
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/openwrt
+        key: ${{ runner.os }}-openwrt-cache-${{ matrix.target }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-cache-
+
+    - name: Compile the firmware
+      run: |
+        docker run -v ${{ github.workspace }}:/workspace -w /workspace ${{ env.DOCKER_IMAGE }} bash -c "\
+        cd openwrt && \
+        make download -j$(($(nproc)+1)) && \
+        make -j$(($(nproc)+1)) || make -j1 V=s"
+
+    - name: Upload bin directory
+      uses: actions/upload-artifact@v3
+      if: steps.compile.conclusion == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      with:
+        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: openwrt/bin
+
+    - name: Organize files
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        mkdir firmware
+        mv -f openwrt/bin/targets/*/*/{*combined*,*sysupgrade*} ./firmware/ 2>/dev/null || true
+        cp openwrt/.config  ./firmware/${{matrix.target}}.config
+        cp openwrt/build_dir/target-*/linux-*/linux-*/.config ./firmware/${{matrix.target}}_kernel.config
+        cd firmware
+        echo "v${{ env.date2 }}" > version.txt
+        md5=$((md5sum *squashfs-sysupgrade* || md5sum *squashfs-combined-efi*) | awk '{print $1}') 2>/dev/null
+        echo $md5 >> version.txt
+        echo ${{matrix.target}} >> version.txt
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+
+    - name: Upload firmware to release
+      uses: softprops/action-gh-release@v2
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
+      with:
+        files: "${{ env.FIRMWARE }}/*"
+        name: ${{ env.date2 }} ${{matrix.target}}
+        tag_name: ${{ env.date }}_${{matrix.target}}
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@master
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 6
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
+
+    - name: Remove Source Code from Release
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        gh release view "${{ env.date }}_${{ matrix.target }}" --json assets -q '.assets[].name' | grep -E 'Source code' | while read -r asset; do
+          gh release delete-asset "${{ env.date }}_${{ matrix.target }}" "$asset"
+        done
+      env:
+        GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
