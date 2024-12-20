@@ -37,6 +37,13 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-openwrt-
 
+   # Add clean previous build step here
+    - name: Clean previous build
+      run: |
+        cd openwrt
+        make clean
+        rm -rf staging_dir build_dir
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
