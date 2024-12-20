@@ -64,7 +64,7 @@ jobs:
       run: |
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
-        sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
+        sed -i '$a src-git smpackage https://github.com/richaradlee/small-package' feeds.conf.default
     - name: Free up disk space
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -176,11 +176,11 @@ jobs:
  
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v2
-      if: steps.tag.outputs.status == 'success' && !cancelled()
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
       with:
-        files: "${{ env.FIRMWARE }}/*"
+        files: "firmware/*"
         name: ${{ env.date2 }} ${{matrix.target}}
         tag_name: ${{ env.date }}_${{matrix.target}}
         body_path: release.txt
