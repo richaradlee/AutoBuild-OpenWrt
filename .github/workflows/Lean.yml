@@ -40,6 +40,10 @@ jobs:
    # Add clean previous build step here
     - name: Clean previous build
       run: |
+        if [ ! -d "openwrt" ]; then
+          echo "openwrt directory not found. Exiting."
+          exit 1
+        fi
         cd openwrt
         make clean
         rm -rf staging_dir build_dir
