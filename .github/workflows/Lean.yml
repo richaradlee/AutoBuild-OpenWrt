@@ -82,10 +82,9 @@ jobs:
     - name: Update feeds
       working-directory: ./openwrt
       run: |
-        sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
-        sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default
+        # sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
+        # sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
-        git clone https://github.com/kingyond/luci-app-accesscontrol-plus.git package/accesscontrol-plus
         ./scripts/feeds update -a
 
     - name: Defconfig ${{matrix.target}}
@@ -150,32 +149,15 @@ jobs:
       run: |
         mkdir firmware
         mv -f openwrt/bin/targets/*/*/{*combined*,*sysupgrade*} ./firmware/ 2>/dev/null || true
-        cp openwrt/.config  ./firmware/${{matrix.target}}.config
-        cp openwrt/build_dir/target-*/linux-*/linux-*/.config ./firmware/${{matrix.target}}_kernel.config
+        # cp openwrt/.config  ./firmware/${{matrix.target}}.config
+        # cp openwrt/build_dir/target-*/linux-*/linux-*/.config ./firmware/${{matrix.target}}_kernel.config
         cd firmware
         echo "v${{ env.date2 }}" > version.txt
         md5=$((md5sum *squashfs-sysupgrade* || md5sum *squashfs-combined-efi*) | awk '{print $1}') 2>/dev/null
         echo $md5 >> version.txt
         rename -v "s/^openwrt/${{ env.VERSION }}-openwrt/" * || true
         rename -v "s/friendlyarm_//" *gz || true
-        echo $md5 >> version.txt
-        echo ${{matrix.target}} >> version.txt
-        rm -rf sha256sums
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         
-    #- name: Upload Firmware To Artifact
-    #  if: steps.compile.conclusion == 'success' && env.UPLOAD_ARTIFACT == 'true'
-    #  uses: actions/upload-artifact@main
-    #  with:
-    #    name: ${{ env.date2 }} ${{matrix.target}}
-    #   path: ${{ env.FIRMWARE }}
-
-    #- name : Upload artifact
-    #  uses: actions/upload-artifact@v4
-    # with:
-    #    name: ${{ env.date2 }} ${{matrix.target}}
-    #    path: ./bin/targets/
-
     - name: Generate release tag
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
