@@ -145,12 +145,6 @@ jobs:
         rename -v "s/^openwrt/${{ env.VERSION }}-openwrt/" * || true
         rename -v "s/friendlyarm_//" *gz || true
 
-    - name: Delete config and source files
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        rm -rf openwrt/.config   # 删除 config 文件
-        rm -rf openwrt          # 删除源代码文件
-
     - name: Generate release tag
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
