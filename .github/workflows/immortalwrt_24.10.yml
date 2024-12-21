@@ -1,5 +1,4 @@
-name: immortalwrt_24.10
-
+name: Lean
 on:
   workflow_dispatch:
   schedule:
@@ -9,27 +8,39 @@ on:
 
 env:
   CLASH_KERNEL: amd64
-  CACHE_TOOLCHAIN: true
   UPLOAD_FIRMWARE: true
   UPLOAD_BIN_DIR: false
   UPLOAD_ARTIFACT: true
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
-    
+
 jobs:
-  build:
-    runs-on: Ubuntu-22.04   
+  merge:
+    runs-on: Ubuntu-22.04
     if: github.event.repository.owner.id == github.event.sender.id
 
     name: Build ${{matrix.target}}
     strategy:
       fail-fast: false
       matrix:
-        target: [immortalwrt_24.10]
-    
+         target: [ctc_24.10]
+
     steps:
     - name: Checkout
       uses: actions/checkout@main
+
+    # 优化 1: 启用依赖和构建缓存
+    - name: Cache build files
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./openwrt/dl
+          ./openwrt/build_dir
+          ./openwrt/staging_dir
+          ./openwrt/tmp
+        key: ${{ runner.os }}-openwrt-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-
 
     - name: Initialization environment
       env:
@@ -42,7 +53,7 @@ jobs:
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
-
+    
     - name: Get current date
       id: date
       run: |
@@ -51,8 +62,9 @@ jobs:
         echo "date3=$(date +'%m.%d')" >> $GITHUB_ENV
         echo "DOCKERTAG=${{ secrets.DOCKER_ID }}/openwrt-6p:latest" >> $GITHUB_ENV
         VERSION="$(echo "${{github.event.action}}" | grep -Eo " [0-9.]+" | sed -e 's/ //')" || true
-        [ "$VERSION" ] && echo "VERSION=$VERSION" >> $GITHUB_ENV || echo "VERSION=$(date +'%m.%d')" >> $GITHUB_ENV      
+        [ "$VERSION" ] && echo "VERSION=$VERSION" >> $GITHUB_ENV || echo "VERSION=$(date +'%m.%d')" >> $GITHUB_ENV
 
+    # 优化 2: 缓存源码目录
     - name: Clone source code
       env: 
         REPO_URL: https://github.com/immortalwrt/immortalwrt
@@ -60,12 +72,10 @@ jobs:
         TZ: Asia/Shanghai        
       run: |
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
-        cd openwrt
-        sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
+          cd openwrt
+          sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
 
     - name: Free up disk space
-      env:
-        DEBIAN_FRONTEND: noninteractive
       run: |
         sudo mkdir -p -m 777 /mnt/openwrt/dl /mnt/openwrt/bin /mnt/openwrt/staging_dir
         ln -sf /mnt/openwrt/dl openwrt/dl
@@ -76,7 +86,7 @@ jobs:
       working-directory: ./openwrt
       run: |
         ./scripts/feeds update -a
-        
+
     - name: Defconfig ${{matrix.target}}
       env:
         CONFIG_FILE: '${{matrix.target}}.config'
@@ -93,23 +103,17 @@ jobs:
         sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
         patch -p1 < "feeds/smpackage/.github/diy/patches/0004-luci-mod-status-firewall-disable-legacy-firewall-rul.patch"
         cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner
-        sed -i "s/%D %V, %C/openwrt $(date +'%m.%d') by Richard/g" package/base-files/files/etc/banner
+        sed -i "s/%D %V, %C/openwrt $(date +'%m.%d') by kenzo/g" package/base-files/files/etc/banner
         #cp -Rf feeds/smpackage/.github/diy/.packages/files/* files
         ./scripts/feeds update -a && ./scripts/feeds install -a
         cp -f feeds/smpackage/.github/diy/${{matrix.target}}.config .config && make defconfig
-        
+
     - name: Download package
       working-directory: ./openwrt
       run: |
         make download -j$(nproc)
         find dl -size -1024c -exec rm -f {} \;
 
-    - name: Cache
-      uses: klever1988/cachewrtbuild@main
-      with:
-        ccache: 'true'
-        prefix: ${{ github.workspace }}/openwrt
-        
     - name: Check space usage
       run: |
         shopt -s extglob
@@ -117,13 +121,13 @@ jobs:
         if [[ -f staging_dir/*${{ env.MTARGET }}*/bin ]]; then
             rm -rf staging_dir/!(*${{ env.MTARGET }}*|host|hostpkg) build_dir/!(*${{ env.MTARGET }}*|host|hostpkg)
         fi
-        df -hT        
+        df -hT       
 
     - name: Compile the firmware
       working-directory: ./openwrt
       run: |
-        echo -e "$(($(nproc)+1)) thread compile"
-        make -j$(($(nproc)+1)) || make -j1 V=s      
+        echo -e "$(nproc) threads compiling"
+        make -j$(nproc) || make -j1 V=s
 
     - name: Upload bin directory
       uses: actions/upload-artifact@main
@@ -132,36 +136,27 @@ jobs:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
+    # 优化 4: 删除多余文件，仅保留固件
     - name: Organize files
       id: organize
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
         mkdir firmware
         mv -f openwrt/bin/targets/*/*/{*combined*,*sysupgrade*} ./firmware/ 2>/dev/null || true
-        cp openwrt/.config  ./firmware/${{matrix.target}}.config
-        cp openwrt/build_dir/target-*/linux-*/linux-*/.config ./firmware/${{matrix.target}}_kernel.config
         cd firmware
         echo "v${{ env.date2 }}" > version.txt
-        md5=$((md5sum *squashfs-sysupgrade* || md5sum *squashfs-combined-efi*) | awk '{print $1}') 2>/dev/null
-        echo $md5 >> version.txt
-        rename -v "s/^immortalwrt/${{ env.VERSION }}-openwrt/" * || true
-        rename -v "s/friendlyarm_//" *gz
-        echo $md5 >> version.txt
-        echo ${{matrix.target}} >> version.txt     
+        rename -v "s/^openwrt/${{ env.VERSION }}-openwrt/" * || true
+        rename -v "s/friendlyarm_//" *gz || true
         rm -rf sha256sums
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        
-    - name: Check Space Usage
-      if: (!cancelled())
-      run: df -hT
 
     - name: Generate release tag
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo -e " 🎈:\n" >> release.txt
+        echo -e " -- 📒 -- 💻 -- ⚽ -- 💝 -- 🌐 -- 🔑 -- " >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
-   
+
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v2
       if: steps.tag.outputs.status == 'success' && !cancelled()
