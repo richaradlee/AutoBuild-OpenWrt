@@ -30,14 +30,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
 
-    # 优化 1: 启用缓存，优化构建时间
     - name: Cache build files
       uses: actions/cache@v3
       with:
         path: |
           ./openwrt/dl
-          ./openwrt/staging_dir
-        key: ${{ runner.os }}-openwrt-${{ matrix.target }}
+        key: ${{ runner.os }}-openwrt-dl-${{ matrix.target }}
         restore-keys: |
-          ${{ runner.os }}-openwrt-
+          ${{ runner.os }}-openwrt-dl-
 
