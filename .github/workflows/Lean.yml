@@ -1,10 +1,12 @@
 name: Lean
 on:
+  repository_dispatch:
   workflow_dispatch:
-  schedule:
-    - cron: 00 17 * * *
-  watch:
-    types: started
+    inputs:
+      ssh:
+        description: 'ssh'
+        required: false
+        default: 'false'
 
 env:
   CLASH_KERNEL: amd64
