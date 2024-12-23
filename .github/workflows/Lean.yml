@@ -138,13 +138,6 @@ jobs:
         echo -e "$(($(nproc)+1)) thread compile"
         make -j$(($(nproc)+1)) || make -j1 V=s
 
-    - name: Upload bin directory
-      uses: actions/upload-artifact@main
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
-      with:
-        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-        path: openwrt/bin
-
     - name: Organize files
       id: organize
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
@@ -159,10 +152,7 @@ jobs:
         echo $md5 >> version.txt
         rename -v "s/^openwrt/${{ env.VERSION }}-openwrt/" * || true
         rename -v "s/friendlyarm_//" *gz || true
-        echo $md5 >> version.txt
-        echo ${{matrix.target}} >> version.txt
-        rm -rf sha256sums
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+
         
     - name: Generate release tag
       id: tag
@@ -177,7 +167,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.SEARIY_TOKEN }}
       with:
-        files: "${{ env.FIRMWARE }}/*"
+        files: "./firmware/*"
         name: ${{ env.date2 }} ${{matrix.target}}
         tag_name: ${{ env.date }}_${{matrix.target}}
         body_path: release.txt
