@@ -10,11 +10,16 @@ on:
         default: 'false'
     
 env:
-  CLASH_KERNEL: amd64
-  UPLOAD_FIRMWARE: true
   UPLOAD_BIN_DIR: false
-  UPLOAD_ARTIFACT: true
+  UPLOAD_FIRMWARE: true
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+  REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+  DOCKER_ID: ${{ secrets.DOCKER_ID }}
+  DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}  
   TZ: Asia/Shanghai
     
 jobs:
