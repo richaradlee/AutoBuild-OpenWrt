@@ -8,7 +8,6 @@ on:
         required: false
         default: 'false'
 
-
 env:
   CLASH_KERNEL: amd64
   UPLOAD_FIRMWARE: true
