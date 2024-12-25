@@ -61,6 +61,7 @@ jobs:
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
         sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
+        git pull
 
     - name: Free up disk space
       env:
@@ -73,12 +74,10 @@ jobs:
 
     - name: Update feeds
       working-directory: ./openwrt
-      run: |
-        sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
-        git pull
+      run: |       
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
         ./scripts/feeds update -a
-        ./scripts/feeds install -a
+    
 
     - name: Defconfig ${{matrix.target}}
       env:
