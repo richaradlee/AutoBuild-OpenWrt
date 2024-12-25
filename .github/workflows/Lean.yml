@@ -9,10 +9,10 @@ on:
         default: 'false'
 
 env:
-  CLASH_KERNEL: amd64
-  UPLOAD_FIRMWARE: true
   UPLOAD_BIN_DIR: false
-  UPLOAD_ARTIFACT: true
+  UPLOAD_FIRMWARE: true
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
 
@@ -43,12 +43,12 @@ jobs:
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
         # 清理旧的 OpenWrt 缓存和中间产物
-        sudo rm -rf /mnt/openwrt/dl /mnt/openwrt/bin /mnt/openwrt/staging_dir
+        # sudo rm -rf /mnt/openwrt/dl /mnt/openwrt/bin /mnt/openwrt/staging_dir
         # 运行 make clean 以清理旧的编译文件
-        if [ -d openwrt ]; then
-          cd openwrt
-          make clean
-        fi
+        # if [ -d openwrt ]; then
+        #  cd openwrt
+        #  make clean
+        # fi
         
     - name: Get current date
       id: date
