@@ -83,7 +83,7 @@ jobs:
       run: |       
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
         git clone https://github.com/chenmozhijin/luci-app-turboacc.git
-        git clone https://github.com/Lienol/openwrt-package/luci-app-fileassistant.git
+        #git clone https://github.com/Lienol/openwrt-package/luci-app-fileassistant.git
         ./scripts/feeds update -a
     
 
@@ -100,7 +100,7 @@ jobs:
         rm -rf feeds/luci/applications/luci-app-passwall
         rm -rf feeds/luci/applications/luci-app-passwall2
         rm -rf feeds/luci/applications/luci-app-turboacc
-        rm -rf feeds/luci/applications/luci-app-fileassistant
+        #rm -rf feeds/luci/applications/luci-app-fileassistant
         cp -f feeds/smpackage/.github/diy/default-settings package/lean/default-settings/files/zzz-default-settings
         cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner
         #cp -f feeds/smpackage/.github/diy/index_x86.htm package/lean/autocore/files/x86/index.htm
@@ -118,13 +118,23 @@ jobs:
         make download -j$(($(nproc)+1))
         find dl -size -1024c -exec rm -f {} \;
         
-    - name: Cache
-      uses: stupidloud/cachewrtbuild@main
+    #- name: Cache
+     # uses: stupidloud/cachewrtbuild@main
+      #with:
+       # ccache: 'true'
+        #mixkey: ${{ matrix.target }}
+        #clean: ${{ contains(github.event.action, 'nocache') }}
+        #prefix: ${{ github.workspace }}/openwrt
+
+    - name: 缓存ccache
+      uses: actions/cache@v4
+      if: ${{ steps.prepare.outputs.use-cache }}
       with:
-        ccache: 'true'
-        mixkey: ${{ matrix.target }}
-        clean: ${{ contains(github.event.action, 'nocache') }}
-        prefix: ${{ github.workspace }}/openwrt
+        path: ${{ steps.prepare.outputs.openwrt-path }}/.ccache
+        key: ${{ steps.prepare.outputs.cache-key }}
+        restore-keys: |
+          ${{ steps.prepare.outputs.cache-restore-key }}
+
     
     - name: Check space usage
       run: |
