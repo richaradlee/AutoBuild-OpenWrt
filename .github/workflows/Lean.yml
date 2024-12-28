@@ -140,7 +140,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ runner.temp }}/ccache
-        key: ${{ matrix.target }}-ccache-${{ github.sha }}
+        key: ${{ matrix.target }}-ccache-${{ github.ref_name }}
         restore-keys: |
           ${{ matrix.target }}-ccache-
 
