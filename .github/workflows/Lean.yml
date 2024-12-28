@@ -83,7 +83,6 @@ jobs:
       run: |       
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
         git clone https://github.com/chenmozhijin/luci-app-turboacc.git
-        #git clone https://github.com/Lienol/openwrt-package/luci-app-fileassistant.git
         ./scripts/feeds update -a
     
 
@@ -99,8 +98,6 @@ jobs:
         rm -rf feeds/luci/applications/luci-app-openclash
         rm -rf feeds/luci/applications/luci-app-passwall
         rm -rf feeds/luci/applications/luci-app-passwall2
-        #rm -rf feeds/luci/applications/luci-app-turboacc
-        #rm -rf feeds/luci/applications/luci-app-fileassistant
         cp -f feeds/smpackage/.github/diy/default-settings package/lean/default-settings/files/zzz-default-settings
         cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner
         #cp -f feeds/smpackage/.github/diy/index_x86.htm package/lean/autocore/files/x86/index.htm
