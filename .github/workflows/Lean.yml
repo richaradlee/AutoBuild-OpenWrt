@@ -126,14 +126,23 @@ jobs:
         #clean: ${{ contains(github.event.action, 'nocache') }}
         #prefix: ${{ github.workspace }}/openwrt
 
-    - name: 缓存ccache
+    - name: 设置缓存路径和变量
+      run: |
+        export CCACHE_DIR=${{ runner.temp }}/ccache
+        export CCACHE_COMPRESS=1
+        export CCACHE_COMPRESSLEVEL=5
+        export CCACHE_MAXSIZE=10G
+        export PATH="/usr/lib/ccache:$PATH"
+        ccache -z
+        ccache -M 10G
+
+    - name: 缓存 ccache
       uses: actions/cache@v4
-      if: ${{ steps.prepare.outputs.use-cache }}
       with:
-        path: ${{ steps.prepare.outputs.openwrt-path }}/.ccache
-        key: ${{ steps.prepare.outputs.cache-key }}
+        path: ${{ runner.temp }}/ccache
+        key: ${{ matrix.target }}-ccache-${{ github.sha }}
         restore-keys: |
-          ${{ steps.prepare.outputs.cache-restore-key }}
+          ${{ matrix.target }}-ccache-
 
     
     - name: Check space usage
