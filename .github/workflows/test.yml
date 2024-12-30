@@ -12,6 +12,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Clone OpenWrt source
+        run: |
+          git clone https://github.com/openwrt/openwrt.git openwrt
+          cd openwrt
+          git checkout v22.03.5  # 替换为需要的分支
+
       - name: Set up OpenWrt feeds
         run: |
           cd openwrt
