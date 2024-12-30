@@ -29,8 +29,13 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@v3
 
+    - name: Debug cache key
+      run: |
+        echo "Cache key: ${{ runner.os }}-openwrt-${{ matrix.target }}-${{ hashFiles('openwrt/feeds.conf.default') }}"
+        echo "Restore keys: ${{ runner.os }}-openwrt-${{ matrix.target }}-, ${{ runner.os }}-openwrt-, ${{ runner.os }}-"
+     
     - name: Cache OpenWrt sources
       uses: actions/cache@v3
       with:
@@ -43,6 +48,12 @@ jobs:
           ${{ runner.os }}-openwrt-${{ matrix.target }}-
           ${{ runner.os }}-openwrt-
           ${{ runner.os }}-
+
+    - name: Check cache paths
+      run: |
+        ls -R openwrt/dl
+        ls -R openwrt/staging_dir
+        ls -R openwrt/build_dir
 
     - name: Initialization environment
       env:
