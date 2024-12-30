@@ -29,31 +29,7 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Debug cache key
-      run: |
-        echo "Cache key: ${{ runner.os }}-openwrt-${{ matrix.target }}-${{ hashFiles('openwrt/feeds.conf.default') }}"
-        echo "Restore keys: ${{ runner.os }}-openwrt-${{ matrix.target }}-, ${{ runner.os }}-openwrt-, ${{ runner.os }}-"
-     
-    - name: Cache OpenWrt sources
-      uses: actions/cache@v3
-      with:
-        path: |
-          openwrt/dl
-          openwrt/staging_dir
-          openwrt/build_dir
-        key: ${{ runner.os }}-openwrt-${{ matrix.target }}-${{ hashFiles('openwrt/feeds.conf.default') }}
-        restore-keys: |
-          ${{ runner.os }}-openwrt-${{ matrix.target }}-
-          ${{ runner.os }}-openwrt-
-          ${{ runner.os }}-
-
-    - name: Check cache paths
-      run: |
-        ls -R openwrt/dl
-        ls -R openwrt/staging_dir
-        ls -R openwrt/build_dir
+      uses: actions/checkout@main
 
     - name: Initialization environment
       env:
@@ -108,7 +84,6 @@ jobs:
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
         git clone https://github.com/chenmozhijin/luci-app-turboacc.git
         ./scripts/feeds update -a
-    
 
     - name: Defconfig ${{matrix.target}}
       env:
@@ -177,8 +152,7 @@ jobs:
         echo $md5 >> version.txt
         rename -v "s/^openwrt/${{ env.VERSION }}-openwrt/" * || true
         rename -v "s/friendlyarm_//" *gz || true
-
-        
+       
     - name: Generate release tag
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
