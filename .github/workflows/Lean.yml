@@ -31,17 +31,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
 
-    - name: Cache OpenWrt sources
-      uses: actions/cache@v3
-      with:
-        path: |
-          openwrt/dl
-          openwrt/staging_dir
-          openwrt/build_dir
-        key: ${{ runner.os }}-openwrt-${{ matrix.target }}-${{ hashFiles('**/feeds.conf.default') }}
-        restore-keys: |
-          ${{ runner.os }}-openwrt-${{ matrix.target }}-
-
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
