@@ -18,7 +18,7 @@ env:
 
 jobs:
   merge:
-    runs-on: Ubuntu-22.04
+    runs-on: ubuntu-latest
     if: github.event.repository.owner.id == github.event.sender.id
 
     name: Build ${{matrix.target}}
@@ -31,6 +31,17 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
 
+    - name: Free disk space
+      uses: coder-xiaomo/free-disk-space@main
+      with:
+        tool-cache: false
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true    
+        
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
