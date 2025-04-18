@@ -29,9 +29,9 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@V4
 
-    - name: Free disk space
+    - name: Free Disk Space
       uses: coder-xiaomo/free-disk-space@main
       with:
         tool-cache: false
