@@ -29,7 +29,7 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@V4
+      uses: actions/checkout@main
 
     - name: Free Disk Space
       uses: coder-xiaomo/free-disk-space@main
