@@ -9,7 +9,7 @@ on:
         default: 'false'
 
 env:
-  UPLOAD_BIN_DIR: true
+  UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
   UPLOAD_COWTRANSFER: false
   UPLOAD_WETRANSFER: false
@@ -34,7 +34,7 @@ jobs:
     - name: Free Disk Space
       uses: coder-xiaomo/free-disk-space@main
       with:
-        tool-cache: false
+        tool-cache: true
         android: true
         dotnet: true
         haskell: true
