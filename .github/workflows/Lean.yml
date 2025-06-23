@@ -138,7 +138,10 @@ jobs:
         fi
         df -hT
 
-        
+    - name: Clean /tmp
+      run: |
+       sudo rm -rf /tmp/*     
+       rm -rf build_dir/host staging_dir/host
 
     - name: Compile the firmware
       working-directory: ./openwrt
