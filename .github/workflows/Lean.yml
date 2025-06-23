@@ -138,6 +138,8 @@ jobs:
         fi
         df -hT
 
+        
+
     - name: Compile the firmware
       working-directory: ./openwrt
       run: |
