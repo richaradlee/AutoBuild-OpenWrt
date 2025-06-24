@@ -115,7 +115,7 @@ jobs:
       working-directory: ./openwrt
       run: |       
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
-        git clone https://github.com/fw876/helloworld/luci-app-ssr-plus package/dns2socks-rust
+        git clone https://github.com/fw876/helloworld/luci-app-ssr-plus.git package/dns2socks-rust
         ./scripts/feeds update -a
 
     - name: Defconfig ${{matrix.target}}
