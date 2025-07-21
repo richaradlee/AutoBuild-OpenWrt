@@ -1,4 +1,4 @@
-name: Lean
+                          name: Lean
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -96,8 +96,7 @@ jobs:
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
         sed -i '$a src-git smpackage https://github.com/Shawleevip/small-package' feeds.conf.default
-        sed -i '$a src-git helloworld https://github.com/fw876/helloworld' feeds.conf.default
- 
+     
     - name: Free Disk Space (Ubuntu)
       uses: jlumbroso/free-disk-space@main
       with:
@@ -116,7 +115,6 @@ jobs:
       working-directory: ./openwrt
       run: |       
         git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
-        # git clone https://github.com/fw876/helloworld/luci-app-ssr-plus.git
         ./scripts/feeds update -a
 
     - name: Defconfig ${{matrix.target}}
@@ -129,9 +127,6 @@ jobs:
         rm -rf feeds/packages/lang/golang
         git clone https://github.com/kenzok8/golang feeds/packages/lang/golang 
         rm -rf feeds/luci/applications/luci-app-openclash
-        rm -rf feeds/luci/applications/luci-app-passwall
-        rm -rf feeds/luci/applications/luci-app-passwall2
-        # rm -rf feeds/smpackage/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftables,ppp,opkg,ucl,upx,vsftpd*,miniupnpd-iptables,wireless-regdb}
         cp -f feeds/smpackage/.github/diy/default-settings package/lean/default-settings/files/zzz-default-settings
         cp -f feeds/smpackage/.github/diy/banner package/base-files/files/etc/banner
         #cp -f feeds/smpackage/.github/diy/index_x86.htm package/lean/autocore/files/x86/index.htm
