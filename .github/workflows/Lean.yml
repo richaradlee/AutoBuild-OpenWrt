@@ -1,4 +1,4 @@
-                          name: Lean
+name: Lean
 on:
   repository_dispatch:
   workflow_dispatch:
